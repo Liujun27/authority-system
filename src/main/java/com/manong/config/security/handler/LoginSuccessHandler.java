@@ -2,6 +2,7 @@ package com.manong.config.security.handler;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.manong.config.redis.RedisService;
 import com.manong.entity.User;
 import com.manong.utils.JwtUtils;
 import com.manong.utils.LoginResult;
@@ -23,7 +24,8 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
 
     @Resource
     private JwtUtils jwtUtils;
-
+    @Resource
+    private RedisService redisService;
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
         //设置响应的编码格式
@@ -34,6 +36,9 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         User user = (User) authentication.getPrincipal();
         //生成token
         String token = jwtUtils.generateToken(user);
+        //把生成的token存到redis
+        String tokenKey = "token_"+token;
+        redisService.set(tokenKey,token,jwtUtils.getExpiration() / 1000);
         //设置TOKEN的签名密钥和过期时间
         long expireTime = Jwts.parser()
                 .setSigningKey(jwtUtils.getSecret())        //设置签名密钥

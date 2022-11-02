@@ -1,5 +1,6 @@
 package com.manong.config.security;
 
+import com.manong.config.security.filter.CheckTokenFilter;
 import com.manong.config.security.handler.AnonymousAuthenticationHandler;
 import com.manong.config.security.handler.CustomerAccessDeniedHandler;
 import com.manong.config.security.handler.LoginFailureHandler;
@@ -13,6 +14,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.annotation.Resource;
 
@@ -29,6 +31,8 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     private AnonymousAuthenticationHandler anonymousAuthenticationHandler;
     @Resource
     private CustomerAccessDeniedHandler customerAccessDeniedHandler;
+    @Resource
+    private CheckTokenFilter checkTokenFilter;
 /**
  * 注入加密处理类
  *
@@ -47,6 +51,8 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
     @Override
     protected void configure(HttpSecurity http) throws Exception {
         //登录前进行过滤
+        http.addFilterBefore(checkTokenFilter,
+                UsernamePasswordAuthenticationFilter.class);
         http.formLogin()    //表单信息
                 .loginProcessingUrl("/api/user/login")      //登录请求url地址，可自定义
                 // 设置登录验证成功或失败后的的跳转地址
