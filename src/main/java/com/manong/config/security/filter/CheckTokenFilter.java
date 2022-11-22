@@ -53,7 +53,7 @@ public class CheckTokenFilter extends OncePerRequestFilter {
         } catch (AuthenticationException e) {
             loginFailureHandler.onAuthenticationFailure(request, response, e);
         }
-//登录请求不需要验证token
+        //登录请求不需要验证token
         doFilter(request, response, filterChain);
     }
     /**
@@ -63,47 +63,47 @@ public class CheckTokenFilter extends OncePerRequestFilter {
      */
     private void validateToken(HttpServletRequest request) throws
             AuthenticationException {
-//从头部获取token信息
+        //从头部获取token信息
         String token = request.getHeader("token");
-//如果请求头部没有获取到token，则从请求的参数中进行获取
+        //如果请求头部没有获取到token，则从请求的参数中进行获取
         if (ObjectUtils.isEmpty(token)) {
             token = request.getParameter("token");
         }
-//如果请求参数中也不存在token信息，则抛出异常
+        //如果请求参数中也不存在token信息，则抛出异常
         if (ObjectUtils.isEmpty(token)) {
-            throw new CustomerAuthenticationException("token不存在");
+            throw new CustomerAuthenticationException("认证凭证不存在，请重新登录");
         }
-//判断redis中是否存在该token
+        //判断redis中是否存在该token
         String tokenKey = "token_" + token;
         String redisToken = redisService.get(tokenKey);
-//如果redis里面没有token,说明该token失效
+        //如果redis里面没有token,说明该token失效
         if (ObjectUtils.isEmpty(redisToken)) {
-            throw new CustomerAuthenticationException("token已过期");
+            throw new CustomerAuthenticationException("认证凭证已过期，请重新登录");
         }
-//如果token和Redis中的token不一致，则验证失败
+        //如果token和Redis中的token不一致，则验证失败
         if (!token.equals(redisToken)) {
-            throw new CustomerAuthenticationException("token验证失败");
+            throw new CustomerAuthenticationException("认证凭证验证失败，请重新登录");
         }
-//如果存在token，则从token中解析出用户名
+        //如果存在token，则从token中解析出用户名
         String username = jwtUtils.getUsernameFromToken(token);
-//如果用户名为空，则解析失败
+        //如果用户名为空，则解析失败
         if (ObjectUtils.isEmpty(username)) {
-            throw new CustomerAuthenticationException("token解析失败");
+            throw new CustomerAuthenticationException("认证凭证解析失败，请重新登录");
         }
-//获取用户信息
+        //获取用户信息
         UserDetails userDetails =
                 customerUserDetailsService.loadUserByUsername(username);
-//判断用户信息是否为空
+        //判断用户信息是否为空
         if (userDetails == null) {
-            throw new CustomerAuthenticationException("token验证失败");
+            throw new CustomerAuthenticationException("认证凭证验证失败，请重新登录");
         }
-//创建身份验证对象
+        //创建身份验证对象
         UsernamePasswordAuthenticationToken authenticationToken = new
                 UsernamePasswordAuthenticationToken(userDetails, null,
                 userDetails.getAuthorities());
         authenticationToken.setDetails(new
                 WebAuthenticationDetailsSource().buildDetails(request));
-//设置到Spring Security上下文
+        //设置到Spring Security上下文
         SecurityContextHolder.getContext().setAuthentication(authenticationToken);
     }
 }
